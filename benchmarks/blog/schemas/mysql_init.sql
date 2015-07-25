@@ -1,1 +1,1 @@
-select * from test_table;
+create;
