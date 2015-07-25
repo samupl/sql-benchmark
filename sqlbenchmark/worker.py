@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from multiprocessing import Process
+from multiprocessing import Process, Event
+import time
 from sqlbenchmark.query_loader import QueryLoader
 
 
@@ -15,11 +16,14 @@ class BenchmarkWorker(Process):
         self.database = None
         self.host = None
 
+        self.queue = None
         self.adapter_class = None
         self.adapter = None
         self.benchmark = None
         self.query_loader = None
         self.query_list = []
+        self.query_count = 0
+        self.exit = Event()
     # endregion
 
     def initialize(self):
@@ -36,6 +40,18 @@ class BenchmarkWorker(Process):
     def run(self):
         self.initialize()
         self.adapter.connect()
-        for q in self.query_list:
-            query = self.query_loader.get_query(q)
-            self.adapter.query(query)
+
+        while not self.exit.is_set():
+            for q in self.query_list:
+                if self.exit.is_set():
+                    break
+                query = self.query_loader.get_query(q)
+                self.adapter.query(query)
+                self.query_count = self.adapter.query_count
+                # Clear the queue - only one item should be there
+                if not self.queue.empty():
+                    self.queue.get()
+                self.queue.put(self.query_count)
+
+    def stop(self):
+        self.exit.set()

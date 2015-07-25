@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from sqlbenchmark.adapters import AdapterFactory
-from sqlbenchmark.worker import BenchmarkWorker
+from sqlbenchmark.process_info import ProcessInformationManager
+from sqlbenchmark.query_loader import QueryLoader
 
 
 class SQLBenchmark(object):
@@ -22,6 +23,10 @@ class SQLBenchmark(object):
         # Workers
         self.process_list = []
         self.process_count = 1
+        self.process_manager = None
+
+        # QueryLoader
+        self.ql = None
 
         if adapter_name is not None:
             self.set_adapter(adapter_name)
@@ -40,19 +45,18 @@ class SQLBenchmark(object):
         self.database = database
 
     def start_processes(self):
-        for i in range(self.process_count):
-            process = BenchmarkWorker()
-            # Copy data to processes
-            process.adapter_class = self.adapter_class
-            process.host = self.host
-            process.database = self.database
-            process.user = self.user
-            process.password = self.password
-            process.port = self.port
-            process.benchmark = self.benchmark
-
-            self.process_list.append(process)
-            process.start()
+        self.process_manager = ProcessInformationManager()
+        self.process_manager.num_processes = self.process_count
+        self.process_manager.new_process_attributes = {
+            'adapter_class': self.adapter_class,
+            'host': self.host,
+            'database': self.database,
+            'user': self.user,
+            'password': self.password,
+            'port': self.port,
+            'benchmark': self.benchmark
+        }
+        self.process_manager.start()
 
     def init_database(self):
         self.adapter = self.adapter_class(
@@ -63,9 +67,17 @@ class SQLBenchmark(object):
             database=self.database
         )
         self.adapter.connect()
+        self.ql = QueryLoader(self.benchmark, self.adapter.get_adapter_name())
+        schema_queries = self.ql.get_schema('init')
+        self.adapter.query(schema_queries)
 
     def cleanup_database(self):
-        pass
+        schema_queries = self.ql.get_schema('destroy')
+        self.adapter.query(schema_queries)
 
     def run_benchmark(self):
+        self.init_database()
         self.start_processes()
+        raw_input()
+        self.process_manager.stop()
+        self.cleanup_database()

@@ -10,6 +10,7 @@ class BaseAdapter(object):
         self.username = username
         self.password = password
         self.database = database
+        self.query_count = 0
 
     def connect(self):
         raise NotImplementedError

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+import pprint
 import os
+import sqlparse
 
 
 class QueryLoader(object):
@@ -23,13 +25,18 @@ class QueryLoader(object):
 
         fp = self.load_file(name, 'queries')
         query = fp.read()
-        self.query_cache[name] = query
-        return query
+        queries = sqlparse.split(query)
+        ret_queries = [q.strip() for q in queries if q.strip()]
+        self.query_cache[name] = ret_queries
+        return ret_queries
 
     def get_schema(self, name):
         fp = self.load_file(name, 'schemas')
         query = fp.read()
-        return query
+        # queries = query.split(';')
+        queries = sqlparse.split(query)
+        ret_queries = [q.strip() for q in queries if q.strip()]
+        return ret_queries
 
     def list_queries(self):
         query_path = os.path.join(self.get_base_path(), 'queries')
