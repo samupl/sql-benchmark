@@ -22,7 +22,7 @@ class SQLBenchmark(object):
 
         # Workers
         self.process_list = []
-        self.process_count = 1
+        self.process_count = 20
         self.process_manager = None
 
         # QueryLoader

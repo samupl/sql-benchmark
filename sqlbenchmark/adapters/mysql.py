@@ -22,24 +22,15 @@ class MySQLBenchmarkAdapter(BaseAdapter):
             port=self.port
         )
 
-    def query(self, query_str):
-        if type(query_str) in (list, tuple):
-            query_list = query_str
-        else:
-            query_list = [query_str]
-
-        self.query_count = 0
-        for q in query_list:
-            cursor = self.db.cursor()
-            cursor.execute(q)
-            if q.startswith("INSERT"):
-                self.db.commit()
-            _ = cursor.fetchall()
-            self.query_count += 1
-
-
     def disconnect(self):
         self.db.close()
 
     def get_adapter_name(self):
         return 'mysql'
+
+    def run_query(self, query_str):
+        cursor = self.db.cursor()
+        cursor.execute(query_str)
+        if query_str.startswith("INSERT"):
+            self.db.commit()
+        _ = cursor.fetchall()

@@ -24,6 +24,7 @@ class BenchmarkWorker(Process):
         self.query_list = []
         self.query_count = 0
         self.exit = Event()
+        self.counter_reset = Event()
     # endregion
 
     def initialize(self):
@@ -45,13 +46,23 @@ class BenchmarkWorker(Process):
             for q in self.query_list:
                 if self.exit.is_set():
                     break
+
+                if self.counter_reset.is_set():
+                    self.adapter.query_count = 0
+                    self.counter_reset.clear()
+
                 query = self.query_loader.get_query(q)
                 self.adapter.query(query)
                 self.query_count = self.adapter.query_count
+
                 # Clear the queue - only one item should be there
                 if not self.queue.empty():
                     self.queue.get()
+
                 self.queue.put(self.query_count)
 
     def stop(self):
         self.exit.set()
+
+    def reset_counter(self):
+        self.counter_reset.set()

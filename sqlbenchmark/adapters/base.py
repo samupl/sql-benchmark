@@ -18,10 +18,16 @@ class BaseAdapter(object):
     def disconnect(self):
         raise NotImplementedError
 
-    def query(self, query_str):
+    def query(self, queries):
         if self.restart_per_query:
             self.disconnect()
             self.connect()
+
+        for q in queries:
+            self.run_query(q)
+            self.query_count += 1
+
+    def run_query(self, query_str):
         raise NotImplementedError
 
     def get_adapter_name(self):

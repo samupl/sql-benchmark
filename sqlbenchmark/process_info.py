@@ -37,10 +37,12 @@ class ProcessInformationManager(object):
                 except Empty:
                     pass
                 else:
-                    old_query_count = self.qps[i]
-                    qps = query_count - old_query_count # diff = number of queries done during 1s
+                    #old_query_count = self.qps[i]
+                    # qps = query_count - old_query_count # diff = number of queries done during 1s
                     # print "qps:", qps, " old:", old_query_count, " current:", query_count
-                    self.qps[i] = qps
+                    self.qps[i] = query_count
+
+                self.process_list[i].reset_counter()
                 i += 1
 
     def start_processes(self):
@@ -77,9 +79,9 @@ class ProcessInformationManager(object):
             i = 0
             total_qps = 0
             for qps in self.qps:
-                print "Worker {id}:   {qps} queries/sec".format(id=i, qps=qps)
+                print "Worker {id:>4}:   {qps:>10} queries/sec".format(id=i, qps=qps)
                 i += 1
                 total_qps += qps
 
             print "--------"
-            print "Total: {qps}".format(qps=total_qps)
+            print "Total: {qps:>18} queries/sec".format(qps=total_qps)
